@@ -1,0 +1,38 @@
+{
+  "name": "sherlock",
+  "version": "0.1.0",
+  "private": true,
+  "description": "S H E R L O C K — visual chess investigation GUI over Lughnasadh 0.2",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n server,vite -c slate,parchment \"tsx watch server/index.ts\" \"vite\"",
+    "build": "vite build && tsc -p tsconfig.server.json",
+    "start": "NODE_ENV=production node dist-server/server/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
+    "smoke": "tsx scripts/smoke.ts",
+    "test": "tsx --test tests/uci-parsers.test.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "chess.js": "^1.0.0",
+    "chessground": "^9.1.1",
+    "express": "^4.21.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.17.10",
+    "@types/react": "^18.3.18",
+    "@types/react-dom": "^18.3.5",
+    "@types/ws": "^8.5.13",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.6"
+  }
+}
