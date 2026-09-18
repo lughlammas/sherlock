@@ -1,19 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useSherlockSocket } from '../hooks/useSherlockSocket';
+import { useSherlockLocal } from '../hooks/useSherlockLocal';
+import { hasNativeUci } from '../local/nativeUci';
+import type { ClientMessage } from '../../shared/types';
+import type { SherlockClientState } from '../hooks/useSherlockSocket';
 import Board from './components/Board';
 import EvalBar from './components/EvalBar';
 import EvidencePanel from './components/EvidencePanel';
 import LogPanel from './components/LogPanel';
 
-export default function App() {
-  const { state, send, clearLogs } = useSherlockSocket();
+type Client = {
+  state: SherlockClientState;
+  send: (msg: ClientMessage) => void;
+  clearLogs: () => void;
+};
+
+function Desk({ state, send, clearLogs }: Client) {
   const [fenInput, setFenInput] = useState(state.position.fen);
   const [pgnInput, setPgnInput] = useState('');
   const [depth, setDepth] = useState(12);
   const [movetime, setMovetime] = useState(2000);
   const [useMovetime, setUseMovetime] = useState(false);
 
-  // Keep fen input in sync when position changes from server (but not while typing)
   useEffect(() => {
     setFenInput(state.position.fen);
   }, [state.position.fen]);
@@ -60,7 +68,11 @@ export default function App() {
         <div className="header-meta">
           <span className={`dot ${state.connected ? 'on' : 'off'}`} />
           <span className="mono small">
-            {state.connected ? 'desk online' : 'desk offline'}
+            {state.connected
+              ? hasNativeUci()
+                ? 'on-device'
+                : 'desk online'
+              : 'desk offline'}
           </span>
         </div>
       </header>
@@ -167,4 +179,18 @@ export default function App() {
       </footer>
     </div>
   );
+}
+
+function AppLocal() {
+  const client = useSherlockLocal();
+  return <Desk {...client} />;
+}
+
+function AppSocket() {
+  const client = useSherlockSocket();
+  return <Desk {...client} />;
+}
+
+export default function App() {
+  return hasNativeUci() ? <AppLocal /> : <AppSocket />;
 }

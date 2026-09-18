@@ -4,7 +4,7 @@
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { UciParsers } from '../adapter/LughnasadhAdapter.ts';
+import { UciParsers } from '../shared/uciParsers.ts';
 
 describe('UciParsers (mock, no binary)', () => {
   it('parses info with score cp, depth, nodes, nps, pv', () => {

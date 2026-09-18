@@ -105,3 +105,27 @@ Abra `http://127.0.0.1:8787`. Conecta ao Lughnasadh 0.2 no boot (`onEngineReady`
 - Engine: **Lughnasadh 0.2** (classical), never Stockfish, never DroidFish.
 - Product name exclusively **S H E R L O C K**.
 - No simulated engine replies in the integrated app (mocks only in unit tests).
+
+
+---
+
+## Android (Galaxy S21)
+
+On-device build (WebView GUI + native Lughnasadh 0.2 via ProcessBuilder):
+
+```bash
+npm run android:s21
+# → Sherlock-0.1.0-s21.apk
+```
+
+See `README-ANDROID-S21.txt` (PT) for sideload steps. Architecture on phone:
+
+```
+GUI (React in WebView)
+  → LocalController
+  → LocalLughnasadhAdapter
+  → SherlockUci JavascriptInterface
+  → ProcessBuilder(liblughnasadh.so)
+```
+
+No desktop Node/WebSocket dependency in the APK.

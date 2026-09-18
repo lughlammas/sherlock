@@ -2,7 +2,7 @@
   "name": "sherlock",
   "version": "0.1.0",
   "private": true,
-  "description": "S H E R L O C K — visual chess investigation GUI over Lughnasadh 0.2",
+  "description": "S H E R L O C K \u2014 visual chess investigation GUI over Lughnasadh 0.2",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n server,vite -c slate,parchment \"tsx watch server/index.ts\" \"vite\"",
@@ -10,7 +10,8 @@
     "start": "NODE_ENV=production node dist-server/server/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
     "smoke": "tsx scripts/smoke.ts",
-    "test": "tsx --test tests/uci-parsers.test.ts"
+    "test": "tsx --test tests/uci-parsers.test.ts tests/local-adapter-session.test.ts",
+    "android:s21": "bash scripts/build-android-s21.sh"
   },
   "engines": {
     "node": ">=20"
