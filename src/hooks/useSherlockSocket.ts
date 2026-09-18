@@ -32,6 +32,7 @@ export interface SherlockClientState {
   sessionId: string | null;
   logs: LogEntry[];
   errorMessage?: string;
+  matchState: import('../../shared/types').MatchState | null;
 }
 
 let logSeq = 0;
@@ -64,6 +65,7 @@ export function useSherlockSocket() {
     bestMove: null,
     sessionId: null,
     logs: [],
+    matchState: null,
   });
 
   const pushLog = useCallback((entry: Omit<LogEntry, 'id'>) => {
@@ -250,6 +252,31 @@ export function useSherlockSocket() {
             kind: 'app',
             level: 'error',
             text: msg.message,
+          });
+          break;
+        case 'match_state':
+          setState((s) => ({ ...s, matchState: msg.state, status: msg.state.running ? 'matching' : s.status }));
+          break;
+        case 'match_move':
+          pushLog({
+            at: Date.now(),
+            kind: 'app',
+            level: 'info',
+            text: `MATCH ${msg.side === 'w' ? 'W' : 'B'} ply ${msg.ply}: ${msg.san} (${msg.uci})`,
+          });
+          break;
+        case 'match_ended':
+          setState((s) => ({
+            ...s,
+            matchState: s.matchState
+              ? { ...s.matchState, running: false, result: msg.result, endReason: msg.reason, pgn: msg.pgn }
+              : s.matchState,
+          }));
+          pushLog({
+            at: Date.now(),
+            kind: 'app',
+            level: 'info',
+            text: `MATCH ENDED ${msg.result} — ${msg.reason}`,
           });
           break;
         default:

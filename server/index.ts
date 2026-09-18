@@ -102,6 +102,9 @@ controller.subscribe({
     broadcast({ type: 'uci_log', direction, line, at: Date.now() }),
   onLog: (level, message) =>
     broadcast({ type: 'log', level, message, at: Date.now() }),
+  onMatchState: (state) => broadcast({ type: 'match_state', state }),
+  onMatchMove: (payload) => broadcast({ type: 'match_move', ...payload }),
+  onMatchEnded: (payload) => broadcast({ type: 'match_ended', ...payload }),
 });
 
 wss.on('connection', (ws) => {
@@ -159,6 +162,22 @@ wss.on('connection', (ws) => {
           break;
         case 'set_debug':
           controller.setDebug(msg.enabled);
+          break;
+        case 'start_match':
+          await controller.startMatch({
+            hashMb: msg.hashMb,
+            threads: msg.threads,
+            go:
+              msg.movetime != null || msg.depth != null
+                ? { movetime: msg.movetime, depth: msg.depth }
+                : undefined,
+          });
+          break;
+        case 'stop_match':
+          await controller.stopMatch();
+          break;
+        case 'new_match':
+          await controller.newMatch();
           break;
         default:
           send(ws, { type: 'error', message: 'Unknown message type' });

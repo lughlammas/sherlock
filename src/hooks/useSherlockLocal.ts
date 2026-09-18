@@ -37,6 +37,7 @@ export function useSherlockLocal() {
     bestMove: null,
     sessionId: null,
     logs: [],
+    matchState: null,
   });
 
   const pushLog = useCallback((entry: Omit<LogEntry, 'id'>) => {
@@ -155,6 +156,35 @@ export function useSherlockLocal() {
       onLog: (level, message) => {
         pushLog({ at: Date.now(), kind: 'app', level, text: message });
       },
+      onMatchState: (state) => {
+        setState((s) => ({
+          ...s,
+          matchState: state,
+          status: state.running ? 'matching' : s.status,
+        }));
+      },
+      onMatchMove: (payload) => {
+        pushLog({
+          at: Date.now(),
+          kind: 'app',
+          level: 'info',
+          text: `MATCH ${payload.side === 'w' ? 'W' : 'B'} ply ${payload.ply}: ${payload.san} (${payload.uci})`,
+        });
+      },
+      onMatchEnded: (payload) => {
+        setState((s) => ({
+          ...s,
+          matchState: s.matchState
+            ? { ...s.matchState, running: false, result: payload.result, endReason: payload.reason, pgn: payload.pgn }
+            : s.matchState,
+        }));
+        pushLog({
+          at: Date.now(),
+          kind: 'app',
+          level: 'info',
+          text: `MATCH ENDED ${payload.result} — ${payload.reason}`,
+        });
+      },
     });
 
     pushLog({
@@ -206,6 +236,22 @@ export function useSherlockLocal() {
         break;
       case 'set_debug':
         c.setDebug(msg.enabled);
+        break;
+      case 'start_match':
+        void c.startMatch({
+          hashMb: msg.hashMb,
+          threads: msg.threads,
+          go:
+            msg.movetime != null || msg.depth != null
+              ? { movetime: msg.movetime, depth: msg.depth }
+              : undefined,
+        });
+        break;
+      case 'stop_match':
+        void c.stopMatch();
+        break;
+      case 'new_match':
+        void c.newMatch();
         break;
       default:
         break;

@@ -303,6 +303,45 @@ export class LughnasadhAdapter {
     // Keep session until bestmove or explicit invalidate — caller decides
   }
 
+  /**
+   * Apply UCI options (Hash / Threads). Follows with isready.
+   * Hash clamped to engine max 4096; Threads typically max 1 on Lughnasadh 0.2.
+   */
+  async setOption(name: string, value: string | number): Promise<void> {
+    this.sendRaw(`setoption name ${name} value ${value}`);
+    await this.waitIsReady();
+  }
+
+  async configurePower(opts: { hashMb: number; threads: number }): Promise<void> {
+    const hash = Math.max(1, Math.min(4096, Math.floor(opts.hashMb)));
+    const threads = Math.max(1, Math.floor(opts.threads));
+    await this.setOption('Hash', hash);
+    await this.setOption('Threads', threads);
+  }
+
+  private waitIsReady(timeoutMs = 8000): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error('Timeout waiting for readyok'));
+      }, timeoutMs);
+      const cleanup = () => {
+        clearTimeout(timer);
+        this.pendingReady = null;
+      };
+      this.pendingReady = () => {
+        cleanup();
+        resolve();
+      };
+      try {
+        this.sendRaw('isready');
+      } catch (e) {
+        cleanup();
+        reject(e);
+      }
+    });
+  }
+
   async quit(): Promise<void> {
     this.invalidateSession();
     this.ready = false;

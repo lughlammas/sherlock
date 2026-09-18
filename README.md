@@ -100,6 +100,28 @@ Abra `http://127.0.0.1:8787`. Conecta ao Lughnasadh 0.2 no boot (`onEngineReady`
 
 ---
 
+
+
+---
+
+## CASO CRUZADO — Lughnasadh × Lughnasadh (JOGAR)
+
+Engine match mode: **two** independent Lughnasadh 0.2 processes (White + Black), classical UCI only.
+
+- Threads option max is **1** → dual process instead of multi-thread.
+- Default full power: **Hash 512MB per engine** (UCI max 4096), `go movetime 4000` (or depth 18+).
+- Continuous until mate/draw or STOP. Live PGN stream. No Stockfish. No artificial strength cap.
+- UI warns about battery/RAM; intentional for Galaxy S21 stress.
+
+Desktop smoke:
+
+```bash
+npm run smoke:match
+```
+
+Android: dual `ProcessBuilder` slots (`main` / `white` / `black`) via `SherlockUci`.
+
+
 ## Honesty
 
 - Engine: **Lughnasadh 0.2** (classical), never Stockfish, never DroidFish.
@@ -115,7 +137,7 @@ On-device build (WebView GUI + native Lughnasadh 0.2 via ProcessBuilder):
 
 ```bash
 npm run android:s21
-# → Sherlock-0.1.2-s21.apk
+# → Sherlock-0.1.3-s21.apk
 ```
 
 See `README-ANDROID-S21.txt` (PT) for sideload steps. Architecture on phone:
@@ -133,7 +155,7 @@ No desktop Node/WebSocket dependency in the APK.
 
 ---
 
-## Art direction (0.1.2 — LOCKED)
+## Art direction (0.1.3 — LOCKED)
 
 **SHERLOCK by LughLammas — chess as a case file.**
 

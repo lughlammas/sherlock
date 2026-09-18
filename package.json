@@ -1,6 +1,6 @@
 {
   "name": "sherlock",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "S H E R L O C K \u2014 chess as a case file \u00b7 by LughLammas \u00b7 Lughnasadh 0.2",
   "type": "module",
@@ -10,6 +10,7 @@
     "start": "NODE_ENV=production node dist-server/server/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.server.json --noEmit",
     "smoke": "tsx scripts/smoke.ts",
+    "smoke:match": "tsx scripts/smoke-match.ts",
     "test": "tsx --test tests/uci-parsers.test.ts tests/local-adapter-session.test.ts",
     "android:s21": "bash scripts/build-android-s21.sh"
   },

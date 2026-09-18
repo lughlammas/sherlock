@@ -1,28 +1,26 @@
 /**
  * Thin bridge to Android JavascriptInterface `SherlockUci`.
- * Native side owns ProcessBuilder stdin/stdout for liblughnasadh.so.
+ * Supports multiple concurrent engine ids (main / white / black).
  */
 
 export interface SherlockUciNative {
-  /** Start (or restart) the UCI process; returns JSON {ok:boolean, error?:string, path?:string} */
-  start(): string;
-  /** Write one UCI line (without trailing newline) */
-  send(line: string): void;
-  /** Stop search / soft stop — sends `stop` if process alive */
-  stop(): void;
-  /** Quit and destroy process */
-  quit(): void;
-  /** true if native bridge present */
+  start(engineId?: string): string;
+  startEngine?(engineId: string): string;
+  send(engineIdOrLine: string, lineMaybe?: string): void;
+  sendLine?(engineId: string, line: string): void;
+  stop(engineId?: string): void;
+  stopEngine?(engineId: string): void;
+  quit(engineId?: string): void;
+  quitEngine?(engineId: string): void;
   isAvailable(): boolean;
 }
 
 declare global {
   interface Window {
     SherlockUci?: SherlockUciNative;
-    /** Called from Java on each stdout line */
-    __sherlockOnUciLine?: (line: string) => void;
-    __sherlockOnUciExit?: (code: number) => void;
-    __sherlockOnUciError?: (message: string) => void;
+    __sherlockOnUciLine?: (a: string, b?: string) => void;
+    __sherlockOnUciExit?: (a: string | number, b?: number) => void;
+    __sherlockOnUciError?: (a: string, b?: string) => void;
   }
 }
 
@@ -34,28 +32,57 @@ export type NativeLineHandler = (line: string) => void;
 export type NativeExitHandler = (code: number) => void;
 export type NativeErrorHandler = (message: string) => void;
 
-export class NativeUciPort {
-  private onLine: NativeLineHandler | null = null;
-  private onExit: NativeExitHandler | null = null;
-  private onError: NativeErrorHandler | null = null;
+type SlotHandlers = {
+  onLine: NativeLineHandler;
+  onExit: NativeExitHandler;
+  onError: NativeErrorHandler;
+};
 
-  attach(handlers: {
-    onLine: NativeLineHandler;
-    onExit: NativeExitHandler;
-    onError: NativeErrorHandler;
-  }): void {
-    this.onLine = handlers.onLine;
-    this.onExit = handlers.onExit;
-    this.onError = handlers.onError;
-    window.__sherlockOnUciLine = (line) => this.onLine?.(line);
-    window.__sherlockOnUciExit = (code) => this.onExit?.(code);
-    window.__sherlockOnUciError = (message) => this.onError?.(message);
+const slots = new Map<string, SlotHandlers>();
+let dispatcherInstalled = false;
+
+function installGlobalDispatcher(): void {
+  if (dispatcherInstalled || typeof window === 'undefined') return;
+  dispatcherInstalled = true;
+
+  window.__sherlockOnUciLine = (a: string, b?: string) => {
+    if (typeof b === 'string') slots.get(a)?.onLine(b);
+    else slots.get('main')?.onLine(a);
+  };
+  window.__sherlockOnUciExit = (a: string | number, b?: number) => {
+    if (typeof a === 'string' && typeof b === 'number') slots.get(a)?.onExit(b);
+    else if (typeof a === 'number') slots.get('main')?.onExit(a);
+  };
+  window.__sherlockOnUciError = (a: string, b?: string) => {
+    if (typeof b === 'string') slots.get(a)?.onError(b);
+    else slots.get('main')?.onError(a);
+  };
+}
+
+export class NativeUciPort {
+  private engineId: string;
+
+  constructor(engineId = 'main') {
+    this.engineId = engineId;
+    installGlobalDispatcher();
+  }
+
+  attach(handlers: SlotHandlers): void {
+    slots.set(this.engineId, handlers);
+  }
+
+  detach(): void {
+    slots.delete(this.engineId);
   }
 
   start(): { ok: boolean; error?: string; path?: string } {
     if (!window.SherlockUci) return { ok: false, error: 'SherlockUci bridge missing' };
     try {
-      const raw = window.SherlockUci.start();
+      const api = window.SherlockUci;
+      const raw =
+        this.engineId !== 'main' && api.startEngine
+          ? api.startEngine(this.engineId)
+          : api.start(this.engineId);
       return JSON.parse(raw) as { ok: boolean; error?: string; path?: string };
     } catch (e) {
       return { ok: false, error: e instanceof Error ? e.message : String(e) };
@@ -63,14 +90,29 @@ export class NativeUciPort {
   }
 
   send(line: string): void {
-    window.SherlockUci?.send(line);
+    const api = window.SherlockUci;
+    if (!api) return;
+    if (api.sendLine) {
+      api.sendLine(this.engineId, line);
+      return;
+    }
+    if (this.engineId === 'main') api.send(line);
+    else api.send(this.engineId, line);
   }
 
   stop(): void {
-    window.SherlockUci?.stop();
+    const api = window.SherlockUci;
+    if (!api) return;
+    if (api.stopEngine) api.stopEngine(this.engineId);
+    else if (this.engineId === 'main') api.stop();
+    else api.stop(this.engineId);
   }
 
   quit(): void {
-    window.SherlockUci?.quit();
+    const api = window.SherlockUci;
+    if (!api) return;
+    if (api.quitEngine) api.quitEngine(this.engineId);
+    else if (this.engineId === 'main') api.quit();
+    else api.quit(this.engineId);
   }
 }

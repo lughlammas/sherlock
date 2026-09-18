@@ -18,7 +18,7 @@ export interface AdapterHandlers {
 }
 
 export class LocalLughnasadhAdapter {
-  private port = new NativeUciPort();
+  private port: NativeUciPort;
   private handlers: AdapterHandlers;
   private ready = false;
   private searching = false;
@@ -28,9 +28,12 @@ export class LocalLughnasadhAdapter {
   private pendingReady: (() => void) | null = null;
   private pendingUci: (() => void) | null = null;
   private started = false;
+  private engineId: string;
 
-  constructor(handlers: AdapterHandlers) {
+  constructor(handlers: AdapterHandlers, engineId = 'main') {
     this.handlers = handlers;
+    this.engineId = engineId;
+    this.port = new NativeUciPort(engineId);
     this.port.attach({
       onLine: (line) => this.onLine(line),
       onExit: (code) => {
@@ -40,7 +43,7 @@ export class LocalLughnasadhAdapter {
         this.started = false;
         if (wasReady || code !== 0) {
           this.handlers.onCrash({
-            message: `Engine process exited (code ${code})`,
+            message: `Engine process exited (code ${code}) [${engineId}]`,
             code,
           });
         }
@@ -65,7 +68,7 @@ export class LocalLughnasadhAdapter {
   }
 
   getEnginePath(): string {
-    return 'liblughnasadh.so (on-device)';
+    return `liblughnasadh.so (on-device:${this.engineId})`;
   }
 
   async start(): Promise<void> {
@@ -225,6 +228,41 @@ export class LocalLughnasadhAdapter {
       }
     }
     this.searching = false;
+  }
+
+  async setOption(name: string, value: string | number): Promise<void> {
+    this.sendRaw(`setoption name ${name} value ${value}`);
+    await this.waitIsReady();
+  }
+
+  async configurePower(opts: { hashMb: number; threads: number }): Promise<void> {
+    const hash = Math.max(1, Math.min(4096, Math.floor(opts.hashMb)));
+    const threads = Math.max(1, Math.floor(opts.threads));
+    await this.setOption('Hash', hash);
+    await this.setOption('Threads', threads);
+  }
+
+  private waitIsReady(timeoutMs = 8000): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error('Timeout waiting for readyok'));
+      }, timeoutMs);
+      const cleanup = () => {
+        clearTimeout(timer);
+        this.pendingReady = null;
+      };
+      this.pendingReady = () => {
+        cleanup();
+        resolve();
+      };
+      try {
+        this.sendRaw('isready');
+      } catch (e) {
+        cleanup();
+        reject(e);
+      }
+    });
   }
 
   async quit(): Promise<void> {

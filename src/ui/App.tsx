@@ -7,6 +7,7 @@ import type { SherlockClientState } from '../hooks/useSherlockSocket';
 import Board from './components/Board';
 import EvalBar from './components/EvalBar';
 import EvidencePanel from './components/EvidencePanel';
+import CrossCasePanel from './components/CrossCasePanel';
 import LogPanel from './components/LogPanel';
 
 type Mode = 'arquivo' | 'jogar' | 'analisar' | 'treinar';
@@ -261,7 +262,7 @@ function Desk({ state, send, clearLogs }: Client) {
               bestMoveUci={state.bestMove?.bestMove}
               onUserMove={(from, to) => send({ type: 'play_move', from, to })}
               showEvidenceTags={mode === 'analisar'}
-              interactive={mode !== 'arquivo'}
+              interactive={mode !== 'arquivo' && state.status !== 'matching'}
             />
           </div>
 
@@ -359,34 +360,21 @@ function Desk({ state, send, clearLogs }: Client) {
           />
         )}
         {mode === 'jogar' && (
-          <aside className="parchment-panel evidence-panel">
-            <div className="caso-n-label">CASO N.º</div>
-            <div className="caso-n-value">{caseNo}</div>
-            <p className="detective-note">
-              Novo caso aberto. Jogue lances no tabuleiro — a mesa não bloqueia.
-            </p>
-            <div className="btn-row">
-              <button
-                type="button"
-                className="btn primary"
-                onClick={() => {
-                  send({ type: 'new_position' });
-                }}
-              >
-                NOVO CASO
-              </button>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => setMode('analisar')}
-              >
-                ABRIR INVESTIGAÇÃO
-              </button>
-            </div>
-            <p className="hub-tagline" style={{ marginTop: 'auto' }}>
-              {TAGLINE}
-            </p>
-          </aside>
+          <CrossCasePanel
+            caseNo={caseNo}
+            matchState={state.matchState ?? null}
+            status={state.status}
+            onStart={(opts) =>
+              send({
+                type: 'start_match',
+                movetime: opts.movetime,
+                depth: opts.depth,
+                hashMb: opts.hashMb,
+              })
+            }
+            onStop={() => send({ type: 'stop_match' })}
+            onNew={() => send({ type: 'new_match' })}
+          />
         )}
         {mode === 'treinar' && (
           <aside className="parchment-panel evidence-panel">

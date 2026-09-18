@@ -5,15 +5,20 @@
  */
 import { Chess } from 'chess.js';
 import { LughnasadhAdapter } from '../adapter/LughnasadhAdapter.js';
+import { EngineMatchDirector } from './EngineMatchDirector.js';
 import {
   DEFAULT_START_FEN,
   ENGINE_DISPLAY_NAME,
+  DEFAULT_MATCH_HASH_MB,
+  DEFAULT_MATCH_MOVETIME_MS,
   type AnalysisRequest,
   type BestMoveResult,
   type EngineInfo,
   type Evaluation,
   type GameLoadedInfo,
   type InvestigationStatus,
+  type MatchConfig,
+  type MatchState,
   type PositionState,
   type SherlockEngineCallbacks,
 } from '../shared/types.js';
@@ -43,6 +48,7 @@ export class SherlockController {
   private debugUci = true;
   private analysisTimeout: ReturnType<typeof setTimeout> | null = null;
   private restarting = false;
+  private match: EngineMatchDirector | null = null;
 
   constructor(enginePath?: string) {
     this.adapter = new LughnasadhAdapter(
@@ -192,6 +198,9 @@ export class SherlockController {
    * Session tokens discard stale info/bestmove.
    */
   async analyze(opts: { depth?: number; movetime?: number } = {}): Promise<string> {
+    if (this.match?.isRunning()) {
+      await this.stopMatch();
+    }
     if (!this.adapter.isReady()) {
       this.emit('onAnalysisError', { message: 'Engine not ready' });
       this.setStatus('engine_error', 'Engine not ready');
@@ -252,6 +261,94 @@ export class SherlockController {
     return sessionId;
   }
 
+
+  /** CASO CRUZADO — two Lughnasadh processes at full Hash, continuous until mate/draw/stop */
+  async startMatch(config: MatchConfig = {}): Promise<void> {
+    await this.cancelAnalysis('cancelled');
+    // Keep analysis adapter process idle; match spawns its own white/black engines.
+
+    const match = this.ensureMatch();
+    const hashMb = config.hashMb ?? DEFAULT_MATCH_HASH_MB;
+    const movetime =
+      config.go?.movetime ?? (config.go?.depth != null ? undefined : DEFAULT_MATCH_MOVETIME_MS);
+    const go = config.go ?? { movetime };
+    this.setStatus('matching', 'CASO CRUZADO — Lughnasadh × Lughnasadh');
+    this.emitRaw('onLog', 'warn', `Match start Hash=${hashMb}MB×2 go=${JSON.stringify(go)}`);
+    await match.startMatch({ ...config, hashMb, go, threads: config.threads ?? 1 });
+  }
+
+  async stopMatch(): Promise<void> {
+    if (this.match) {
+      await this.match.stopMatch();
+    }
+    if (this.adapter.isReady()) {
+      this.syncEnginePosition();
+      this.setStatus('ready');
+    } else {
+      try {
+        await this.adapter.start();
+        this.syncEnginePosition();
+        this.setStatus('ready');
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        this.setStatus('engine_error', message);
+        this.emit('onAnalysisError', { message });
+      }
+    }
+  }
+
+  async newMatch(config?: MatchConfig): Promise<void> {
+    await this.stopMatch();
+    this.chess.reset();
+    this.emit('onPositionChanged', this.snapshotPosition());
+    await this.startMatch(config ?? {});
+  }
+
+  getMatchState(): MatchState | null {
+    return this.match?.getState() ?? null;
+  }
+
+  private ensureMatch(): EngineMatchDirector {
+    if (this.match) return this.match;
+    const enginePath = this.adapter.getEnginePath();
+    this.match = new EngineMatchDirector(
+      (_side, handlers) => new LughnasadhAdapter(handlers, enginePath),
+      {
+        onStatus: (status, detail) => {
+          if (status === 'matching') this.setStatus('matching', detail);
+        },
+        onLog: (level, message) => this.emitRaw('onLog', level, message),
+        onUciLog: (dir, line, side) => {
+          if (this.debugUci) this.emitRaw('onUciLog', dir, `[${side}] ${line}`);
+        },
+        onPositionChanged: (position) => {
+          try {
+            this.chess.load(position.fen);
+          } catch {
+            /* ignore */
+          }
+          this.emit('onPositionChanged', position);
+        },
+        onMatchState: (state) => this.emit('onMatchState', state),
+        onMatchMove: (payload) => this.emit('onMatchMove', payload),
+        onMatchEnded: (payload) => {
+          this.emit('onMatchEnded', payload);
+          this.setStatus('ready', `${payload.result} (${payload.reason})`);
+        },
+        onEngineInfo: (_side, info) => this.emit('onEngineInfo', info),
+        onEvaluationChanged: (_side, evaluation) => {
+          this.lastEvaluation = evaluation;
+          this.emit('onEvaluationChanged', evaluation);
+        },
+        onError: (message) => {
+          this.emitRaw('onLog', 'error', message);
+          this.emit('onAnalysisError', { message });
+        },
+      },
+    );
+    return this.match;
+  }
+
   stop(): void {
     void this.cancelAnalysis('stop');
   }
@@ -259,6 +356,10 @@ export class SherlockController {
   async shutdown(): Promise<void> {
     this.clearAnalysisTimeout();
     this.activeSessionId = null;
+    if (this.match) {
+      await this.match.shutdown();
+      this.match = null;
+    }
     await this.adapter.quit();
   }
 

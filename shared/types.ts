@@ -63,6 +63,51 @@ export interface GameLoadedInfo {
   source: 'fen' | 'pgn' | 'startpos' | 'move';
 }
 
+/** Engine vs engine match (Lughnasadh × Lughnasadh) */
+export interface MatchGoOpts {
+  movetime?: number;
+  depth?: number;
+}
+
+export interface MatchConfig {
+  /** Hash MB per engine process (UCI max 4096). Default 512. */
+  hashMb?: number;
+  /** Threads per process (engine currently max 1). Default 1. */
+  threads?: number;
+  go?: MatchGoOpts;
+}
+
+export interface MatchSideTelemetry {
+  thinking: boolean;
+  nodes: number;
+  nps: number;
+  depth: number;
+  timeMs: number;
+  eval: Evaluation | null;
+  sessionId: string | null;
+}
+
+export interface MatchState {
+  running: boolean;
+  mode: 'lugh_vs_lugh';
+  sideToMove: 'w' | 'b';
+  ply: number;
+  hashMb: number;
+  threads: number;
+  go: MatchGoOpts;
+  white: MatchSideTelemetry;
+  black: MatchSideTelemetry;
+  result: string | null;
+  endReason: string | null;
+  pgn: string;
+  startedAt: number | null;
+}
+
+export const DEFAULT_MATCH_HASH_MB = 512;
+export const DEFAULT_MATCH_THREADS = 1;
+export const DEFAULT_MATCH_MOVETIME_MS = 4000;
+export const ENGINE_HASH_MAX_MB = 4096;
+
 /** Callbacks the controller exposes (spirit of SherlockEngineCallbacks) */
 export interface SherlockEngineCallbacks {
   onEngineReady: (meta: { name: string; author?: string }) => void;
@@ -75,12 +120,22 @@ export interface SherlockEngineCallbacks {
   onEngineCrashed: (error: { message: string; code?: number | null }) => void;
   onPositionChanged: (position: PositionState) => void;
   onGameLoaded: (info: GameLoadedInfo) => void;
+  onMatchState: (state: MatchState) => void;
+  onMatchMove: (payload: {
+    san: string;
+    uci: string;
+    ply: number;
+    side: 'w' | 'b';
+    fen: string;
+  }) => void;
+  onMatchEnded: (payload: { result: string; reason: string; pgn: string }) => void;
 }
 
 export type InvestigationStatus =
   | 'booting'
   | 'ready'
   | 'investigating'
+  | 'matching'
   | 'best_move'
   | 'stopped'
   | 'engine_error'
@@ -96,7 +151,16 @@ export type ClientMessage =
   | { type: 'analyze'; depth?: number; movetime?: number }
   | { type: 'stop' }
   | { type: 'restart_engine' }
-  | { type: 'set_debug'; enabled: boolean };
+  | { type: 'set_debug'; enabled: boolean }
+  | {
+      type: 'start_match';
+      movetime?: number;
+      depth?: number;
+      hashMb?: number;
+      threads?: number;
+    }
+  | { type: 'stop_match' }
+  | { type: 'new_match' };
 
 export type ServerMessage =
   | { type: 'pong' }
@@ -114,7 +178,17 @@ export type ServerMessage =
   | { type: 'game_loaded'; info: GameLoadedInfo }
   | { type: 'uci_log'; direction: 'in' | 'out'; line: string; at: number }
   | { type: 'log'; level: 'debug' | 'info' | 'warn' | 'error'; message: string; at: number }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string }
+  | { type: 'match_state'; state: MatchState }
+  | {
+      type: 'match_move';
+      san: string;
+      uci: string;
+      ply: number;
+      side: 'w' | 'b';
+      fen: string;
+    }
+  | { type: 'match_ended'; result: string; reason: string; pgn: string };
 
 export const DEFAULT_START_FEN =
   'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
