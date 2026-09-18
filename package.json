@@ -1,6 +1,6 @@
 {
   "name": "sherlock",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "S H E R L O C K \u2014 visual chess investigation GUI over Lughnasadh 0.2",
   "type": "module",

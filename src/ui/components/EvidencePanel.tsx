@@ -13,6 +13,7 @@ interface Props {
   lastInfo: EngineInfo | null;
   bestMove: BestMoveResult | null;
   sessionId: string | null;
+  caseNo: string;
   depthDefault: number;
   movetimeDefault: number;
   useMovetime: boolean;
@@ -29,22 +30,31 @@ interface Props {
 function statusLabel(s: InvestigationStatus): string {
   switch (s) {
     case 'booting':
-      return 'BOOTING';
+      return 'INICIALIZANDO';
     case 'ready':
-      return 'READY';
+      return 'PRONTO';
     case 'investigating':
-      return 'INVESTIGATING…';
+      return 'INVESTIGANDO…';
     case 'best_move':
-      return 'BEST MOVE';
+      return 'PISTA ENCONTRADA';
     case 'stopped':
-      return 'STOPPED';
+      return 'INTERROMPIDO';
     case 'engine_error':
-      return 'ENGINE ERROR';
+      return 'ERRO DO MOTOR';
     case 'crashed':
-      return 'ENGINE CRASHED';
+      return 'MOTOR CAIU';
     default:
       return s;
   }
+}
+
+function detectiveNote(s: InvestigationStatus, hasBest: boolean): string {
+  if (s === 'investigating') return 'Seguindo a linha de raciocínio…';
+  if (s === 'best_move' || hasBest) return 'Interessante.';
+  if (s === 'ready') return 'Caso aberto. Aguardando análise.';
+  if (s === 'engine_error' || s === 'crashed') return 'A trilha técnica falhou.';
+  if (s === 'stopped') return 'Investigação pausada.';
+  return 'Preparando o arquivo…';
 }
 
 export default function EvidencePanel(props: Props) {
@@ -56,6 +66,7 @@ export default function EvidencePanel(props: Props) {
     lastInfo,
     bestMove,
     sessionId,
+    caseNo,
     depthDefault,
     movetimeDefault,
     useMovetime,
@@ -74,16 +85,21 @@ export default function EvidencePanel(props: Props) {
   const pv = evaluation?.pv?.join(' ') ?? lastInfo?.pv?.join(' ') ?? '';
 
   return (
-    <aside className="evidence-panel">
-      <header className="evidence-header">
-        <div className="eyebrow">EVIDENCE DESK</div>
-        <div className={`status-pill status-${status}`}>{statusLabel(status)}</div>
-        {statusDetail && <div className="status-detail">{statusDetail}</div>}
-        <div className="engine-meta">
-          Engine: <strong>{engineName ?? 'Lughnasadh 0.2'}</strong>
-          <span className="muted"> · classical UCI</span>
+    <aside className="parchment-panel evidence-panel">
+      <header className="caso-header">
+        <div>
+          <div className="caso-n-label">CASO N.º</div>
+          <div className="caso-n-value">{caseNo}</div>
+          <div className={`status-pill status-${status}`}>{statusLabel(status)}</div>
+          {statusDetail && <div className="status-detail">{statusDetail}</div>}
+          <div className="engine-meta">
+            Motor: <strong>{engineName ?? 'Lughnasadh 0.2'}</strong>
+            <span className="muted"> · UCI clássico</span>
+          </div>
         </div>
       </header>
+
+      <p className="detective-note">{detectiveNote(status, !!bestMove)}</p>
 
       <section className="evidence-controls">
         <div className="field-row">
@@ -93,7 +109,7 @@ export default function EvidencePanel(props: Props) {
               checked={!useMovetime}
               onChange={() => onUseMovetimeChange(false)}
             />{' '}
-            go depth
+            profundidade
           </label>
           <input
             type="number"
@@ -111,7 +127,7 @@ export default function EvidencePanel(props: Props) {
               checked={useMovetime}
               onChange={() => onUseMovetimeChange(true)}
             />{' '}
-            go movetime (ms)
+            tempo (ms)
           </label>
           <input
             type="number"
@@ -130,7 +146,7 @@ export default function EvidencePanel(props: Props) {
             disabled={busy || errored}
             onClick={onAnalyze}
           >
-            ANALYZE
+            ANALISAR
           </button>
           <button
             type="button"
@@ -138,16 +154,16 @@ export default function EvidencePanel(props: Props) {
             disabled={status !== 'investigating'}
             onClick={onStop}
           >
-            STOP
+            PARAR
           </button>
         </div>
         {errored && (
           <div className="btn-row">
             <button type="button" className="btn warn" onClick={onRetry}>
-              RETRY
+              TENTAR DE NOVO
             </button>
             <button type="button" className="btn danger" onClick={onRestart}>
-              RESTART ENGINE
+              REINICIAR MOTOR
             </button>
           </div>
         )}
@@ -155,11 +171,11 @@ export default function EvidencePanel(props: Props) {
 
       <section className="evidence-metrics">
         <div className="metric">
-          <span className="metric-k">depth</span>
+          <span className="metric-k">profundidade</span>
           <span className="metric-v">{evaluation?.depth ?? lastInfo?.depth ?? '—'}</span>
         </div>
         <div className="metric">
-          <span className="metric-k">score</span>
+          <span className="metric-k">avaliação</span>
           <span className="metric-v">
             {evaluation?.mateIn != null
               ? `mate ${evaluation.mateIn}`
@@ -169,51 +185,49 @@ export default function EvidencePanel(props: Props) {
           </span>
         </div>
         <div className="metric">
-          <span className="metric-k">nodes</span>
+          <span className="metric-k">nós</span>
           <span className="metric-v">
-            {evaluation?.nodes?.toLocaleString() ?? '—'}
+            {evaluation?.nodes?.toLocaleString('pt-BR') ?? '—'}
           </span>
         </div>
         <div className="metric">
           <span className="metric-k">nps</span>
           <span className="metric-v">
-            {evaluation?.nps?.toLocaleString() ?? '—'}
+            {evaluation?.nps?.toLocaleString('pt-BR') ?? '—'}
           </span>
         </div>
         <div className="metric">
-          <span className="metric-k">time</span>
+          <span className="metric-k">tempo</span>
           <span className="metric-v">
             {evaluation?.timeMs != null ? `${evaluation.timeMs} ms` : '—'}
           </span>
         </div>
         <div className="metric">
-          <span className="metric-k">session</span>
+          <span className="metric-k">sessão</span>
           <span className="metric-v mono small">{sessionId ?? '—'}</span>
         </div>
       </section>
 
       <section className="evidence-pv">
-        <div className="section-title">
-          PRINCIPAL VARIATION <span className="muted">(reasoning line)</span>
-        </div>
+        <div className="section-title">Linha de raciocínio</div>
         <div className="pv-line mono">{pv || '—'}</div>
         <button type="button" className="btn ghost" disabled={!pv} onClick={onCopyPv}>
-          COPY PV
+          COPIAR LINHA
         </button>
       </section>
 
       <section className="evidence-conclusion">
-        <div className="section-title">CONCLUSION</div>
+        <div className="section-title">Conclusão / evidência</div>
         {bestMove ? (
           <div className="best-move-box">
-            <div className="best-move-label">BEST MOVE</div>
+            <div className="best-move-label">MELHOR LANCE</div>
             <div className="best-move-value mono">{bestMove.bestMove}</div>
             {bestMove.ponder && (
               <div className="ponder muted">ponder {bestMove.ponder}</div>
             )}
           </div>
         ) : (
-          <div className="muted">Awaiting investigation result…</div>
+          <div className="muted detective-note">Aguardando resultado da investigação…</div>
         )}
       </section>
     </aside>

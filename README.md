@@ -129,3 +129,13 @@ GUI (React in WebView)
 ```
 
 No desktop Node/WebSocket dependency in the APK.
+
+
+---
+
+## Art direction (0.1.1)
+
+Media desk aesthetic: dark wood / parchment / olive board / brass tabs / amber case light.
+See `art-direction/` for mockup references. Runtime overlay: `public/art/blind-light.png`.
+
+Gaps: Chessground flat Staunton SVG pieces (not 3D); desk props (pen, wax seal, EVIDÊNCIAS drawer) are CSS chrome only.

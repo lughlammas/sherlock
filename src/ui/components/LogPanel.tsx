@@ -9,13 +9,13 @@ export default function LogPanel({ logs, onClear }: Props) {
   return (
     <section className="log-panel">
       <div className="log-header">
-        <span className="section-title">TECHNICAL TRAIL</span>
+        <span className="section-title">Trilha técnica</span>
         <button type="button" className="btn ghost small" onClick={onClear}>
-          Clear
+          Limpar
         </button>
       </div>
       <div className="log-body mono">
-        {logs.length === 0 && <div className="muted">No entries yet.</div>}
+        {logs.length === 0 && <div className="muted">Nenhuma entrada ainda.</div>}
         {[...logs].reverse().map((l) => (
           <div key={l.id} className={`log-line log-${l.kind} log-${l.level ?? ''}`}>
             <span className="log-time">

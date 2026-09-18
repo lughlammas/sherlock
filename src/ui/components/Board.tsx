@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Chess } from 'chess.js';
 import { Chessground } from 'chessground';
 import type { Api } from 'chessground/api';
@@ -10,6 +10,7 @@ interface Props {
   bestMoveUci?: string | null;
   interactive?: boolean;
   onUserMove?: (from: string, to: string) => void;
+  showEvidenceTags?: boolean;
 }
 
 function destsFromFen(fen: string): Map<Key, Key[]> {
@@ -28,11 +29,23 @@ function destsFromFen(fen: string): Map<Key, Key[]> {
   }
 }
 
+/** Map algebraic square → CSS % for top-left of square (white orientation). */
+function squareToPercent(sq: string): { left: string; top: string } | null {
+  if (!sq || sq.length < 2) return null;
+  const file = sq.charCodeAt(0) - 97; // a=0
+  const rank = Number(sq[1]);
+  if (file < 0 || file > 7 || rank < 1 || rank > 8) return null;
+  const left = (file / 8) * 100;
+  const top = ((8 - rank) / 8) * 100;
+  return { left: `${left}%`, top: `${top}%` };
+}
+
 export default function Board({
   position,
   bestMoveUci,
   interactive = true,
   onUserMove,
+  showEvidenceTags = true,
 }: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<Api | null>(null);
@@ -67,7 +80,6 @@ export default function Board({
       apiRef.current?.destroy();
       apiRef.current = null;
     };
-    // mount once
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -80,7 +92,7 @@ export default function Board({
       shapes.push({
         orig: bestMoveUci.slice(0, 2) as Key,
         dest: bestMoveUci.slice(2, 4) as Key,
-        brush: 'paleGreen',
+        brush: 'yellow',
       });
     }
     api.set({
@@ -99,5 +111,51 @@ export default function Board({
     });
   }, [position, bestMoveUci, interactive]);
 
-  return <div className="cg-wrap board-frame" ref={rootRef} />;
+  const tags = useMemo(() => {
+    if (!showEvidenceTags || !bestMoveUci || bestMoveUci.length < 4 || bestMoveUci === '(none)') {
+      return [];
+    }
+    const from = bestMoveUci.slice(0, 2);
+    const to = bestMoveUci.slice(2, 4);
+    return [
+      { id: 1, sq: from },
+      { id: 2, sq: to },
+    ];
+  }, [bestMoveUci, showEvidenceTags]);
+
+  const scrap =
+    bestMoveUci && bestMoveUci.length >= 4 && bestMoveUci !== '(none)'
+      ? {
+          move: position.moveList.length,
+          pin: bestMoveUci.slice(2, 4).toUpperCase(),
+        }
+      : null;
+
+  return (
+    <div className="board-wrap">
+      <div className="cg-wrap board-frame" ref={rootRef} />
+      {tags.map((t) => {
+        const pos = squareToPercent(t.sq);
+        if (!pos) return null;
+        return (
+          <span
+            key={t.id}
+            className="evidence-tag"
+            style={{ left: pos.left, top: pos.top }}
+            aria-hidden
+          >
+            {t.id}
+          </span>
+        );
+      })}
+      {scrap && (
+        <div className="alfinete-scrap" aria-hidden>
+          <span className="tag-num">1</span>
+          LANCE {Math.max(1, Math.ceil(scrap.move / 2) || 1)}
+          <br />
+          ALFINETE: {scrap.pin}
+        </div>
+      )}
+    </div>
+  );
 }

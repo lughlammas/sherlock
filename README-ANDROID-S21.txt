@@ -1,7 +1,7 @@
-S H E R L O C K 0.1.0 — Android (Samsung Galaxy S21 / arm64-v8a)
+S H E R L O C K 0.1.1 — Android (Samsung Galaxy S21 / arm64-v8a)
 ================================================================
 
-Pacote: Sherlock-0.1.0-s21.apk
+Pacote: Sherlock-0.1.1-s21.apk
 ID:     com.lughlabs.sherlock
 Motor:  Lughnasadh 0.2 (classical UCI, no dispositivo)
 ABI:    arm64-v8a apenas (S21 e aparelhos 64-bit modernos)
@@ -15,7 +15,7 @@ Senha:    android
 
 Instalação no Galaxy S21
 ------------------------
-1. Copie Sherlock-0.1.0-s21.apk para o telefone (USB, Drive, Messages, etc.).
+1. Copie Sherlock-0.1.1-s21.apk para o telefone (USB, Drive, Messages, etc.).
 2. Abra o arquivo APK.
 3. Se o Android pedir, permita "Instalar apps desconhecidos" / fontes
    desconhecidas para o app que está abrindo o APK (Arquivos, Chrome, etc.).
