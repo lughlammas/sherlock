@@ -1,8 +1,8 @@
 {
   "name": "sherlock",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
-  "description": "S H E R L O C K \u2014 visual chess investigation GUI over Lughnasadh 0.2",
+  "description": "S H E R L O C K \u2014 chess as a case file \u00b7 by LughLammas \u00b7 Lughnasadh 0.2",
   "type": "module",
   "scripts": {
     "dev": "concurrently -k -n server,vite -c slate,parchment \"tsx watch server/index.ts\" \"vite\"",

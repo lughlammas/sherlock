@@ -17,6 +17,9 @@ type Client = {
   clearLogs: () => void;
 };
 
+const TAGLINE = 'chess as a case file';
+const BYLINE = 'by LughLammas';
+
 function caseNumberFromSession(sessionId: string | null): string {
   if (!sessionId) return '00017';
   let h = 0;
@@ -36,7 +39,7 @@ function FolderTabs({
   const tabs: { id: Mode; label: string; sub: string }[] = [
     { id: 'jogar', label: 'JOGAR', sub: 'Novo Caso' },
     { id: 'analisar', label: 'ANALISAR', sub: 'Abrir Investigação' },
-    { id: 'treinar', label: 'TREINAR', sub: 'Reconstruir Posição' },
+    { id: 'treinar', label: 'TREINAR IA', sub: 'Reconstruir Posição' },
   ];
   return (
     <nav className="folder-tabs" aria-label="Arquivo">
@@ -65,10 +68,17 @@ function SideNav({
   const items: { id: Mode; label: string; sub: string }[] = [
     { id: 'jogar', label: 'J O G A R', sub: 'Novo Caso' },
     { id: 'analisar', label: 'A N A L I S A R', sub: 'Abrir Investigação' },
-    { id: 'treinar', label: 'T R E I N A R', sub: 'Reconstruir Posição' },
+    { id: 'treinar', label: 'T R E I N A R  I A', sub: 'Reconstruir Posição' },
   ];
   return (
     <aside className="side-nav-wide parchment-panel">
+      <img
+        className="side-nav-seal"
+        src="/art/herald-seal-square.png"
+        alt=""
+        width={56}
+        height={56}
+      />
       <div className="brand-side">S H E R L O C K</div>
       {items.map((t) => (
         <button
@@ -81,7 +91,7 @@ function SideNav({
           <span className="folder-tab-sub">{t.sub}</span>
         </button>
       ))}
-      <p className="side-nav-tagline">Toda partida deixa pistas.</p>
+      <p className="side-nav-tagline">{TAGLINE}</p>
     </aside>
   );
 }
@@ -89,11 +99,28 @@ function SideNav({
 function HubMenu({ onSelect }: { onSelect: (m: Mode) => void }) {
   return (
     <aside className="parchment-panel">
-      <div className="arquivo-header">ARQUIVO N.º 47-B</div>
+      <div className="arquivo-header">ARQUIVO N.º 47-B · DOSSIÊ</div>
+      <div className="hub-splash">
+        <img
+          className="herald-seal large"
+          src="/art/herald-seal-square.png"
+          alt="Herald seal — SHERLOCK by LughLammas"
+          width={176}
+          height={176}
+        />
+        <h2 className="hub-splash-title">SHERLOCK</h2>
+        <p className="hub-splash-sub">
+          {BYLINE} — {TAGLINE}
+        </p>
+        <div className="buckets" aria-hidden>
+          <span className="bucket cobalt" title="cobalt" />
+          <span className="bucket oxblood" title="oxblood" />
+        </div>
+      </div>
       <div className="hub-cards">
         <button type="button" className="hub-card" onClick={() => onSelect('jogar')}>
-          <span className="hub-card-icon king" aria-hidden>
-            ♔
+          <span className="hub-card-icon" aria-hidden>
+            I
           </span>
           <span>
             <span className="hub-card-title">JOGAR</span>
@@ -102,8 +129,8 @@ function HubMenu({ onSelect }: { onSelect: (m: Mode) => void }) {
           <span className="hub-card-idx">01</span>
         </button>
         <button type="button" className="hub-card" onClick={() => onSelect('analisar')}>
-          <span className="hub-card-icon glass" aria-hidden>
-            ⌕
+          <span className="hub-card-icon" aria-hidden>
+            II
           </span>
           <span>
             <span className="hub-card-title">ANALISAR</span>
@@ -112,11 +139,11 @@ function HubMenu({ onSelect }: { onSelect: (m: Mode) => void }) {
           <span className="hub-card-idx">02</span>
         </button>
         <button type="button" className="hub-card" onClick={() => onSelect('treinar')}>
-          <span className="hub-card-icon target" aria-hidden>
-            ⊕
+          <span className="hub-card-icon" aria-hidden>
+            III
           </span>
           <span>
-            <span className="hub-card-title">TREINAR</span>
+            <span className="hub-card-title">TREINAR IA</span>
             <span className="hub-card-sub">Reconstruir Posição</span>
           </span>
           <span className="hub-card-idx">03</span>
@@ -190,7 +217,19 @@ function Desk({ state, send, clearLogs }: Client) {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <h1 className="brand-title">SHERLOCK</h1>
+        <div className="brand-block">
+          <img
+            className="herald-seal"
+            src="/art/herald-seal-square.png"
+            alt=""
+            width={38}
+            height={38}
+          />
+          <div>
+            <h1 className="brand-title">SHERLOCK</h1>
+            <p className="brand-byline">{BYLINE}</p>
+          </div>
+        </div>
         <div className="header-right">
           <button
             type="button"
@@ -221,16 +260,14 @@ function Desk({ state, send, clearLogs }: Client) {
               position={state.position}
               bestMoveUci={state.bestMove?.bestMove}
               onUserMove={(from, to) => send({ type: 'play_move', from, to })}
-              showEvidenceTags={mode === 'analisar' || mode === 'arquivo'}
+              showEvidenceTags={mode === 'analisar'}
               interactive={mode !== 'arquivo'}
             />
           </div>
 
           <div className="board-meta-row">
             <p className="tagline">
-              {mode === 'arquivo'
-                ? 'Cada partida é um caso.'
-                : 'Toda partida deixa pistas.'}
+              {mode === 'arquivo' ? TAGLINE : 'Toda partida deixa pistas.'}
             </p>
             <span className="caso-stamp">CASO {caseNo}</span>
           </div>
@@ -347,14 +384,14 @@ function Desk({ state, send, clearLogs }: Client) {
               </button>
             </div>
             <p className="hub-tagline" style={{ marginTop: 'auto' }}>
-              Cada partida é um caso.
+              {TAGLINE}
             </p>
           </aside>
         )}
         {mode === 'treinar' && (
           <aside className="parchment-panel evidence-panel">
-            <div className="caso-n-label">RECONSTRUIR</div>
-            <div className="caso-n-value" style={{ fontSize: '1.6rem' }}>
+            <div className="caso-n-label">TREINAR IA</div>
+            <div className="caso-n-value" style={{ fontSize: '1.5rem' }}>
               POSIÇÃO
             </div>
             <p className="detective-note">

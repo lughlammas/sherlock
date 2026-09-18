@@ -123,14 +123,6 @@ export default function Board({
     ];
   }, [bestMoveUci, showEvidenceTags]);
 
-  const scrap =
-    bestMoveUci && bestMoveUci.length >= 4 && bestMoveUci !== '(none)'
-      ? {
-          move: position.moveList.length,
-          pin: bestMoveUci.slice(2, 4).toUpperCase(),
-        }
-      : null;
-
   return (
     <div className="board-wrap">
       <div className="cg-wrap board-frame" ref={rootRef} />
@@ -148,14 +140,6 @@ export default function Board({
           </span>
         );
       })}
-      {scrap && (
-        <div className="alfinete-scrap" aria-hidden>
-          <span className="tag-num">1</span>
-          LANCE {Math.max(1, Math.ceil(scrap.move / 2) || 1)}
-          <br />
-          ALFINETE: {scrap.pin}
-        </div>
-      )}
     </div>
   );
 }

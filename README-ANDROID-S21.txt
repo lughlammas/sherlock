@@ -1,10 +1,11 @@
-S H E R L O C K 0.1.1 — Android (Samsung Galaxy S21 / arm64-v8a)
+S H E R L O C K 0.1.2 — Android (Samsung Galaxy S21 / arm64-v8a)
 ================================================================
 
-Pacote: Sherlock-0.1.1-s21.apk
+Pacote: Sherlock-0.1.2-s21.apk
 ID:     com.lughlabs.sherlock
 Motor:  Lughnasadh 0.2 (classical UCI, no dispositivo)
 ABI:    arm64-v8a apenas (S21 e aparelhos 64-bit modernos)
+Visual: LOCKED — herald seal, bone dossier, oxblood letterpress, lamp-black
 
 Assinatura (sideload / debug)
 -----------------------------
@@ -15,7 +16,7 @@ Senha:    android
 
 Instalação no Galaxy S21
 ------------------------
-1. Copie Sherlock-0.1.1-s21.apk para o telefone (USB, Drive, Messages, etc.).
+1. Copie Sherlock-0.1.2-s21.apk para o telefone (USB, Drive, Messages, etc.).
 2. Abra o arquivo APK.
 3. Se o Android pedir, permita "Instalar apps desconhecidos" / fontes
    desconhecidas para o app que está abrindo o APK (Arquivos, Chrome, etc.).
@@ -25,13 +26,13 @@ Instalação no Galaxy S21
 
 Como usar (análise / preparação)
 --------------------------------
+- Hub (ARQUIVO): JOGAR / ANALISAR / TREINAR IA.
 - Tabuleiro: mova peças ou cole um FEN e toque em Aplicar.
-- NEW POSITION: volta ao startpos.
-- ANALYZE: no painel de evidências (direita / abaixo). Escolha profundidade
-  (depth) ou movetime, depois ANALYZE.
+- NOVA POSIÇÃO: volta ao startpos.
+- ANALISAR: no painel de evidências. Escolha profundidade ou movetime.
 - Acompanhe depth / score / nodes / nps / PV ao vivo.
-- STOP interrompe a busca; BEST MOVE destaca a conclusão.
-- Restart reinicia só o motor; a posição no tabuleiro é preservada.
+- PARAR interrompe a busca; MELHOR LANCE destaca a conclusão.
+- Reiniciar motor preserva a posição no tabuleiro.
 
 Importante
 ----------
@@ -53,4 +54,5 @@ Guilherme deve instalar o APK no S21 para validar o bridge nativo
 
 Rebuild
 -------
-  cd android && ./scripts/../  (veja scripts/build-android-s21.sh na raiz)
+  npm run android:s21
+  # → Sherlock-0.1.2-s21.apk (+ /workspace/Sherlock-0.1.2-s21.apk)

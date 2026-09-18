@@ -115,7 +115,7 @@ On-device build (WebView GUI + native Lughnasadh 0.2 via ProcessBuilder):
 
 ```bash
 npm run android:s21
-# → Sherlock-0.1.0-s21.apk
+# → Sherlock-0.1.2-s21.apk
 ```
 
 See `README-ANDROID-S21.txt` (PT) for sideload steps. Architecture on phone:
@@ -133,9 +133,13 @@ No desktop Node/WebSocket dependency in the APK.
 
 ---
 
-## Art direction (0.1.1)
+## Art direction (0.1.2 — LOCKED)
 
-Media desk aesthetic: dark wood / parchment / olive board / brass tabs / amber case light.
-See `art-direction/` for mockup references. Runtime overlay: `public/art/blind-light.png`.
+**SHERLOCK by LughLammas — chess as a case file.**
 
-Gaps: Chessground flat Staunton SVG pieces (not 3D); desk props (pen, wax seal, EVIDÊNCIAS drawer) are CSS chrome only.
+Lamp-black field, bone laid-paper dossiers, oxblood letterpress, antique gold hairlines.
+Herald seal (`public/art/herald-seal.png`) as printed plate for icon / splash / header only — do not restyle.
+Type: Playfair Display / Libre Baskerville + typewriter mono for FEN/PGN/log.
+See `art-direction/README.md`.
+
+Gaps: Chessground flat Staunton SVG pieces (not 3D); paint-bucket contrast marks are CSS chrome only; no physical desk props.
