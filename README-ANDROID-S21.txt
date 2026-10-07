@@ -9,10 +9,11 @@ Visual: LOCKED — herald seal, bone dossier, oxblood letterpress, lamp-black
 
 Assinatura (sideload / debug)
 -----------------------------
-Keystore: /workspace/tooling/lughnasadh-debug.keystore
-Alias:    lughnasadh
-Senha:    android
-(keystore de desenvolvimento Lughnasadh / Lughlammas — ok para sideload)
+Use o seu próprio keystore para assinar o APK (sideload/debug).
+Crie um com:
+  keytool -genkeypair -v -keystore meu-debug.keystore -alias meu-alias \
+    -keyalg RSA -keysize 2048 -validity 10000
+e aponte o build para ele. Não publique senhas de keystore.
 
 Instalação no Galaxy S21
 ------------------------
