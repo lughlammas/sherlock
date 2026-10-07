@@ -1,12 +1,12 @@
 # S H E R L O C K
 
-**S H E R L O C K** — mesa de investigação visual sobre **Lughnasadh 0.2**.
+A visual chess investigation and analysis environment integrating a React web interface, WebSocket controller, UCI adapter, and native Lughnasadh engine execution.
 
-Visual chess investigation desk. Not a cute chess app. Not Stockfish. Not a live-cheating aid.
+**Stack:** React, TypeScript, Vite, Node.js, Express, WebSocket, chess.js and Chessground; Android WebView and a native process bridge.
 
-Prep / analysis of positions only.
+**Status:** version 0.1.3, with an [Android APK release](https://github.com/lughlammas/sherlock/releases/tag/v0.1.3). The supplied Android integration uses Lughnasadh 0.2; the separately maintained 0.4.0 engine has not been integrated or validated here. Parser/session tests and engine smoke scripts are included; no strength or performance benchmark is claimed.
 
----
+By Guilherme Cavalcanti / LughLammas, maintained within **ARBOCK LABS**, an independent software and applied-AI lab currently being structured.
 
 ## Screenshots
 
@@ -45,20 +45,14 @@ Lughnasadh v0.2 binary
 
 ## Engine binary
 
-| Source | Path |
-|--------|------|
-| Default symlink | `engines/lughnasadh` → `/workspace/lughnasadh-build/build/lughnasadh` |
-| Absolute fallback | `/workspace/lughnasadh-build/build/lughnasadh` |
-| Override | `LUGHNASADH_PATH=/path/to/binary` |
+Desktop analysis requires a locally built native Lughnasadh executable. Set `LUGHNASADH_PATH` to its absolute path before starting the server. The adapter also checks `engines/lughnasadh`; the repository's historical symlink/fallback is environment-specific and should not be assumed to work on a fresh clone.
 
-Classical UCI only: `uci`, `isready`, `ucinewgame`, `position fen|startpos moves`, `go depth N`, `go movetime MS`, `stop`, `quit`.
+The adapter supports `uci`, `isready`, `ucinewgame`, `position`, `go depth`, `go movetime`, `stop`, and `quit`.
 
----
-
-## Run (EN)
+## Run
 
 ```bash
-cd /workspace/sherlock   # or your clone
+cd sherlock   # your cloned repository
 npm install
 npm run build
 npm start
@@ -77,10 +71,10 @@ Smoke (real binary):
 npm run smoke
 ```
 
-Mock UCI parser tests (no binary):
+Parser and local-adapter session tests (no native engine required):
 
 ```bash
-npx tsx --test tests/uci-parsers.test.ts
+npm test
 ```
 
 ---
@@ -120,7 +114,7 @@ Engine match mode: **two** independent Lughnasadh 0.2 processes (White + Black),
 
 - Threads option max is **1** → dual process instead of multi-thread.
 - Default full power: **Hash 512MB per engine** (UCI max 4096), `go movetime 4000` (or depth 18+).
-- Continuous until mate/draw or STOP. Live PGN stream. No Stockfish. No artificial strength cap.
+- Continuous until mate/draw or STOP, with a live PGN stream. Resource settings are configuration values, not evidence of playing strength.
 - UI warns about battery/RAM; intentional for Galaxy S21 stress.
 
 Desktop smoke:
@@ -132,14 +126,9 @@ npm run smoke:match
 Android: dual `ProcessBuilder` slots (`main` / `white` / `black`) via `SherlockUci`.
 
 
-## Honesty
+## Scope and limitations
 
-- Engine: **Lughnasadh 0.2** (classical), never Stockfish, never DroidFish.
-- Product name exclusively **S H E R L O C K**.
-- No simulated engine replies in the integrated app (mocks only in unit tests).
-
-
----
+The integrated engine is Lughnasadh 0.2 with classical UCI. Native-engine analysis requires an available executable; mocks in the test suite exercise parser/session behavior. Engine match mode runs separate processes and can use substantial battery and memory. Tests and smoke scripts were not rerun during this documentation pass.
 
 ## Android (Galaxy S21)
 
@@ -150,7 +139,7 @@ npm run android:s21
 # → Sherlock-0.1.3-s21.apk
 ```
 
-See `README-ANDROID-S21.txt` (PT) for sideload steps. Architecture on phone:
+See [Android notes](README-ANDROID-S21.txt) (Portuguese) for sideload steps. Architecture on phone:
 
 ```
 GUI (React in WebView)
@@ -172,6 +161,6 @@ No desktop Node/WebSocket dependency in the APK.
 Lamp-black field, bone laid-paper dossiers, oxblood letterpress, antique gold hairlines.
 Herald seal (`public/art/herald-seal.png`) as printed plate for icon / splash / header only — do not restyle.
 Type: Playfair Display / Libre Baskerville + typewriter mono for FEN/PGN/log.
-See `art-direction/README.md`.
+See [art direction](art-direction/README.md).
 
 Gaps: Chessground flat Staunton SVG pieces (not 3D); paint-bucket contrast marks are CSS chrome only; no physical desk props.
